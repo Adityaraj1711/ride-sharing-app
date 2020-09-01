@@ -17,12 +17,13 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.CameraPosition
-import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.*
 import com.mindorks.ridesharing.R
 import com.mindorks.ridesharing.data.network.NetworkService
+import com.mindorks.ridesharing.utils.MapUtils
 import com.mindorks.ridesharing.utils.PermissionUtils
 import com.mindorks.ridesharing.utils.ViewUtils
+import org.json.JSONObject
 
 class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
 
@@ -35,6 +36,9 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     private var fusedLocationProviderClient: FusedLocationProviderClient? = null
     private lateinit var locationCallback: LocationCallback
     private var currentLatLng: LatLng? = null
+    // this will represent all the cabs. all car basically would be a marker
+    private val nearByCabMarkerList = arrayListOf<Marker>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_maps)
@@ -59,6 +63,7 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     // to show the current location marker
     @SuppressLint("MissingPermission")
     private fun enableMyLocationMap(){
+        // setPadding(left, top, right, bottom) for the location reset button
         googleMap.setPadding(0, ViewUtils.dpToPx(48f), 0, 0)
         googleMap.isMyLocationEnabled = true
     }
@@ -79,6 +84,8 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
                                 enableMyLocationMap()
                                 moveCamera(currentLatLng)
                                 animateCamera(currentLatLng)
+                                // now here we can request near by cabs
+                                presenter.requestNearByCabs(currentLatLng)
                             }
                         }
                     }
@@ -144,5 +151,20 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
     override fun onDestroy() {
         presenter.onDetach()
         super.onDestroy()
+    }
+
+    // function to show bitmap car image as marker
+    private fun addCarMarkerAndGet(latLng: LatLng): Marker{
+        val bitmapDescriptor = BitmapDescriptorFactory.fromBitmap(MapUtils.getCarBitMap(this))
+        return googleMap.addMarker(MarkerOptions().position(latLng).flat(true).icon(bitmapDescriptor))
+    }
+
+    override fun showNearByCabs(latLngList: List<LatLng>) {
+        // to show cabs on the map
+        nearByCabMarkerList.clear()
+        for( latLng in latLngList){
+            val nearByCabMarker = addCarMarkerAndGet(latLng)
+            nearByCabMarkerList.add(nearByCabMarker)
+        }
     }
 }

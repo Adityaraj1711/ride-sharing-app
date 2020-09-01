@@ -99,6 +99,10 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
         googleMap.isMyLocationEnabled = true
     }
 
+    private fun setCurrentLocationAsPickUp(){
+        pickupLatLng = currentLatLng
+        pickUpTextView.text = getString(R.string.current_location)
+    }
 
     private fun setUpLocationListener(){
         fusedLocationProviderClient = FusedLocationProviderClient(this)
@@ -112,6 +116,7 @@ class MapsActivity : AppCompatActivity(), MapsView, OnMapReadyCallback {
                         for(location in locationResult.locations){
                             if(currentLatLng == null){
                                 currentLatLng = LatLng(location.latitude, location.longitude)
+                                setCurrentLocationAsPickUp()
                                 enableMyLocationMap()
                                 moveCamera(currentLatLng)
                                 animateCamera(currentLatLng)
